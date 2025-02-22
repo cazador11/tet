@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TXT to PDF Converter</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500&display=swap');
+        :root {
+            --apple-blue: #007AFF;
+            --apple-gray: #8E8E93;
+            --apple-background: #F5F5F7;
+        }
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 40px 20px;
+            background-color: var(--apple-background);
+            color: #1D1D1F;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            font-weight: 500;
+            margin-bottom: 40px;
+            font-size: 32px;
+        }
+        #txtFile {
+            display: none;
+        }
+        .file-input-label {
+            background-color: var(--apple-blue);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s ease;
+        }
+        .file-input-label:hover {
+            background-color: #0071E3;
+        }
+        #preview {
+            width: 100%;
+            min-height: 300px;
+            margin: 20px 0;
+            padding: 16px;
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            border: 2px solid #E5E5EA;
+            border-radius: 12px;
+            font-size: 16px;
+            line-height: 1.5;
+            resize: vertical;
+            transition: border-color 0.2s ease;
+        }
+        #preview:focus {
+            outline: none;
+            border-color: var(--apple-blue);
+        }
+        button {
+            background-color: var(--apple-blue);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        button:hover {
+            background-color: #0071E3;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TXT to PDF Converter</h1>
+        <input type="file" id="txtFile" accept=".txt">
+        <label for="txtFile" class="file-input-label">Choose a TXT file</label>
+        <textarea id="preview" readonly></textarea>
+        <button onclick="convertToPDF()">Convert to PDF</button>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('txtFile');
+        const preview = document.getElementById('preview');
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.value = e.target.result;
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        function convertToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Set font to Helvetica-Bold for better readability
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0);
+            
+            const text = preview.value;
+            const lines = doc.splitTextToSize(text, 180);
+            
+            let y = 20;
+            for (let i = 0; i < lines.length; i++) {
+                if (y > 280) {
+                    doc.addPage();
+                    y = 20;
+                }
+                doc.text(15, y, lines[i]);
+                y += 8;
+            }
+            const fileName = fileInput.files[0].name.replace('.txt', '.pdf');
+            doc.save(fileName);
+        }
+    </script>
+</body>
+</html>
