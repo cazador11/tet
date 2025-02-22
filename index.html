@@ -39,6 +39,12 @@
         #txtFile {
             display: none;
         }
+        .button-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
         .file-input-label {
             background-color: var(--apple-blue);
             color: white;
@@ -50,19 +56,21 @@
         }
         .file-input-label:hover {
             background-color: #0071E3;
+            transform: translateY(-1px);
         }
         #preview {
             width: 100%;
             min-height: 300px;
             margin: 20px 0;
             padding: 16px;
-            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: inherit;
             border: 2px solid #E5E5EA;
             border-radius: 12px;
             font-size: 16px;
             line-height: 1.5;
             resize: vertical;
             transition: border-color 0.2s ease;
+            box-sizing: border-box;
         }
         #preview:focus {
             outline: none;
@@ -77,19 +85,37 @@
             font-size: 16px;
             cursor: pointer;
             transition: all 0.2s ease;
+            font-family: inherit;
         }
         button:hover {
             background-color: #0071E3;
             transform: translateY(-1px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            .button-group {
+                flex-direction: column;
+            }
+            .button-group > * {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>TXT to PDF Converter</h1>
-        <input type="file" id="txtFile" accept=".txt">
-        <label for="txtFile" class="file-input-label">Choose a TXT file</label>
-        <textarea id="preview" readonly></textarea>
+        <div class="button-group">
+            <input type="file" id="txtFile" accept=".txt">
+            <label for="txtFile" class="file-input-label">Choose a TXT file</label>
+            <button onclick="pasteText()">Paste Text</button>
+        </div>
+        <textarea id="preview" placeholder="Your text will appear here. You can also paste text directly."></textarea>
         <button onclick="convertToPDF()">Convert to PDF</button>
     </div>
 
@@ -103,18 +129,36 @@
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     preview.value = e.target.result;
+                    preview.style.borderColor = 'var(--apple-blue)';
+                    setTimeout(() => preview.style.borderColor = '#E5E5EA', 1000);
                 };
                 reader.readAsText(file);
             }
         });
 
-        function convertToPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+        async function pasteText() {
+            try {
+                const text = await navigator.clipboard.readText();
+                preview.value = text;
+                preview.style.borderColor = 'var(--apple-blue)';
+                setTimeout(() => preview.style.borderColor = '#E5E5EA', 1000);
+            } catch (err) {
+                alert('Failed to read clipboard. Please paste manually using Ctrl+V or Command+V.');
+            }
+        }
+
+        window.jspdf = window.jspdf || {};
+        window.convertToPDF = function() {
+            if (!preview.value.trim()) {
+                preview.style.borderColor = '#FF3B30';
+                setTimeout(() => preview.style.borderColor = '#E5E5EA', 1000);
+                return;
+            }
+
+            const doc = new window.jspdf.jsPDF();
             
-            // Set font to Helvetica-Bold for better readability
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(14);
+            doc.setFont("arial", "normal");
+            doc.setFontSize(12);
             doc.setTextColor(0, 0, 0);
             
             const text = preview.value;
@@ -127,10 +171,14 @@
                     y = 20;
                 }
                 doc.text(15, y, lines[i]);
-                y += 8;
+                y += 7;
             }
-            const fileName = fileInput.files[0].name.replace('.txt', '.pdf');
+            
+            const fileName = fileInput.files[0] ? fileInput.files[0].name.replace('.txt', '.pdf') : 'converted.pdf';
             doc.save(fileName);
+
+            preview.style.borderColor = '#34C759';
+            setTimeout(() => preview.style.borderColor = '#E5E5EA', 1000);
         }
     </script>
 </body>
